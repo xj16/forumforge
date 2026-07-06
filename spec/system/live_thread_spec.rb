@@ -28,17 +28,8 @@ RSpec.describe "Live thread", type: :system, js: true do
     fill_in "post_body", with: "Live reply via Turbo Streams!"
     click_button "Comment"
 
-    begin
-      # The Turbo Stream broadcast appends the post into #posts.
-      expect(page).to have_css("#posts", text: "Live reply via Turbo Streams!")
-    rescue RSpec::Expectations::ExpectationNotMetError
-      warn "=== DIAG post count: #{topic.reload.posts.count} ==="
-      warn "=== DIAG current_url: #{page.current_url} ==="
-      warn "=== DIAG #posts html: #{page.has_css?('#posts') ? find('#posts')[:innerHTML].to_s[0, 500] : 'NO #posts'} ==="
-      logs = page.driver.browser.logs.get(:browser) rescue []
-      logs.each { |l| warn "=== DIAG console: #{l.level} #{l.message}" }
-      raise
-    end
+    # The Turbo Stream broadcast appends the post into #posts without a reload.
+    expect(page).to have_css("#posts", text: "Live reply via Turbo Streams!")
     expect(topic.reload.posts.count).to eq(1)
   end
 end
