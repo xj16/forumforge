@@ -1,0 +1,46 @@
+<%#
+  `user` is the viewer. Controllers pass current_user; Turbo Stream *broadcasts*
+  render this partial without a controller, so fall back to nil and render the
+  signed-out variant. Each browser re-personalises on its next request.
+%>
+<% viewer = local_assigns.fetch(:user) { defined?(current_user) ? current_user : nil } %>
+<% can_manage = viewer && (post.user_id == viewer.id || viewer.moderator?) %>
+<div id="<%= dom_id(post) %>" class="post depth-<%= post.depth %>">
+  <div class="post__gutter">
+    <div id="vote_post_<%= post.id %>" class="vote vote--sm">
+      <%= render "posts/vote", post: post, user: viewer %>
+    </div>
+  </div>
+
+  <div class="post__main">
+    <p class="post__meta">
+      <%= link_to post.user.username, user_path(post.user.username), class: "post__author" %>
+      <%= time_ago(post.created_at) %>
+    </p>
+
+    <div class="post__body"><%= simple_format(post.body) %></div>
+
+    <div class="post__actions">
+      <% if viewer %>
+        <%= link_to "Reply", "#",
+              data: { action: "reply#toggle", reply_target: "trigger" },
+              class: "post__reply-toggle" %>
+      <% end %>
+      <% if can_manage %>
+        <%= button_to "Delete", topic_post_path(post.topic, post), method: :delete,
+              form: { data: { turbo_confirm: "Delete this reply?" } }, class: "link-btn" %>
+      <% end %>
+    </div>
+
+    <% if viewer %>
+      <div data-reply-target="form" class="post__reply-form" hidden
+           data-controller="reply">
+        <%= render "posts/form", topic: post.topic, post: Post.new(parent_id: post.id) %>
+      </div>
+    <% end %>
+
+    <div id="replies_<%= post.id %>" class="post__replies">
+      <%= render partial: "posts/post", collection: post.replies.chronological, as: :post, locals: { user: viewer } %>
+    </div>
+  </div>
+</div>

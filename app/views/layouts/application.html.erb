@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "ForumForge" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= signed_in_meta %>
+
+    <%= yield :head %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <%= link_to "ForumForge", root_path, class: "brand" %>
+        <nav class="site-nav">
+          <%= link_to "Categories", categories_path %>
+          <%= link_to "Leaderboard", leaderboard_path %>
+          <% if user_signed_in? %>
+            <%= link_to "New topic", new_topic_path, class: "btn btn--primary" %>
+            <%= link_to current_user.username, user_path(current_user.username) %>
+            <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "btn btn--ghost" %>
+          <% else %>
+            <%= link_to "Sign in", new_user_session_path %>
+            <%= link_to "Sign up", new_user_registration_path, class: "btn btn--primary" %>
+          <% end %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <% flash.each do |key, message| %>
+        <div class="<%= flash_class(key) %>" role="alert"><%= message %></div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="site-footer">
+      <p>ForumForge &middot; open-source community forum &middot; built with Ruby on Rails + Hotwire</p>
+    </footer>
+  </body>
+</html>

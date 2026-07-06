@@ -1,0 +1,24 @@
+<% content_for :title, "ForumForge — Hot" %>
+
+<%= turbo_stream_from "topics" %>
+
+<div class="feed-header">
+  <h1>
+    <% if params[:category].present? %>
+      <%= Category.friendly.find(params[:category]).name %>
+    <% else %>
+      Community feed
+    <% end %>
+  </h1>
+  <div class="sorts"><%= sort_links(params[:sort]) %></div>
+</div>
+
+<ol id="topics" class="topic-list">
+  <%= render partial: "topics/topic", collection: @topics, as: :topic %>
+</ol>
+
+<% if @topics.empty? %>
+  <p class="empty">No topics yet. <%= link_to "Start the first one", new_topic_path if user_signed_in? %></p>
+<% end %>
+
+<%== pagy_nav(@pagy) if @pagy.pages > 1 %>

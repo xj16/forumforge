@@ -1,0 +1,21 @@
+<% content_for :title, @category.name %>
+
+<%= turbo_stream_from "topics" %>
+
+<div class="feed-header">
+  <h1><%= @category.name %></h1>
+  <% if user_signed_in? %>
+    <%= link_to "New topic here", new_topic_path(category_id: @category.id), class: "btn btn--primary btn--sm" %>
+  <% end %>
+</div>
+<p class="muted"><%= @category.description %></p>
+
+<ol id="topics" class="topic-list">
+  <%= render partial: "topics/topic", collection: @topics, as: :topic %>
+</ol>
+
+<% if @topics.empty? %>
+  <p class="empty">No topics in this category yet.</p>
+<% end %>
+
+<%== pagy_nav(@pagy) if @pagy.pages > 1 %>

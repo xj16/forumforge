@@ -1,0 +1,68 @@
+{
+  "name": "ForumForge",
+  "description": "A modern community forum built with Ruby on Rails and Hotwire — threaded discussions, link aggregation, reputation, and live-updating threads via Turbo Streams.",
+  "repository": "https://github.com/xj16/forumforge",
+  "logo": "https://raw.githubusercontent.com/xj16/forumforge/main/app/assets/images/logo.png",
+  "keywords": ["ruby", "rails", "hotwire", "forum", "turbo", "sidekiq"],
+  "website": "https://github.com/xj16/forumforge",
+  "success_url": "/",
+  "env": {
+    "RAILS_MASTER_KEY": {
+      "description": "The master key used to decrypt config/credentials.yml.enc. Generate with `bin/rails credentials:edit`.",
+      "required": false
+    },
+    "SECRET_KEY_BASE": {
+      "description": "Secret key base for signing cookies and sessions.",
+      "generator": "secret"
+    },
+    "RAILS_ENV": {
+      "value": "production"
+    },
+    "RACK_ENV": {
+      "value": "production"
+    },
+    "RAILS_LOG_TO_STDOUT": {
+      "value": "enabled"
+    },
+    "RAILS_SERVE_STATIC_FILES": {
+      "value": "enabled"
+    },
+    "APP_HOST": {
+      "description": "Public hostname of the deployed app, e.g. forumforge.herokuapp.com",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    },
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    "heroku-postgresql",
+    "heroku-redis"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/ruby"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "bundle exec rails db:seed"
+  },
+  "environments": {
+    "test": {
+      "addons": [
+        "heroku-postgresql",
+        "heroku-redis"
+      ],
+      "scripts": {
+        "test": "bundle exec rspec"
+      }
+    }
+  }
+}

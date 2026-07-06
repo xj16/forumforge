@@ -1,0 +1,18 @@
+# Omakase Ruby styling for Rails, with a few project-specific relaxations.
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+AllCops:
+  NewCops: disable
+  Exclude:
+    - "bin/**/*"
+    - "db/schema.rb"
+    - "db/migrate/*.rb"
+    - "vendor/**/*"
+    - "node_modules/**/*"
+    - "spec/**/*"
+    - "config/**/*"
+
+# The reputation SQL scope is intentionally one line.
+Layout/LineLength:
+  Max: 160

@@ -1,0 +1,36 @@
+<%= form_with model: topic, class: "form" do |f| %>
+  <% if topic.errors.any? %>
+    <div class="form-errors">
+      <ul>
+        <% topic.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :title %>
+    <%= f.text_field :title, autofocus: true, placeholder: "A clear, specific title" %>
+  </div>
+
+  <div class="field">
+    <%= f.label :category_id, "Category" %>
+    <%= f.collection_select :category_id, categories, :id, :name, prompt: "Choose a category" %>
+  </div>
+
+  <div class="field">
+    <%= f.label :url, "Link URL (optional — makes this a link post)" %>
+    <%= f.url_field :url, placeholder: "https://example.com/article" %>
+  </div>
+
+  <div class="field">
+    <%= f.label :body, "Body (optional if you provided a link)" %>
+    <%= f.text_area :body, rows: 8, placeholder: "Say something…" %>
+  </div>
+
+  <div class="actions">
+    <%= f.submit topic.persisted? ? "Save" : "Post topic", class: "btn btn--primary" %>
+    <%= link_to "Cancel", (topic.persisted? ? topic_path(topic) : root_path), class: "btn btn--ghost" %>
+  </div>
+<% end %>

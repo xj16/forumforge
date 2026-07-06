@@ -1,0 +1,54 @@
+<% content_for :title, @topic.title %>
+
+<%= turbo_stream_from @topic %>
+
+<article class="topic-detail">
+  <div class="topic-detail__head">
+    <div id="vote_topic_<%= @topic.id %>" class="vote">
+      <%= render "topics/vote", topic: @topic, user: current_user %>
+    </div>
+    <div class="topic-detail__title">
+      <h1>
+        <% if @topic.link? %>
+          <%= link_to @topic.title, @topic.url, rel: "nofollow noopener", target: "_blank" %>
+          <span class="domain">(<%= @topic.domain %>)</span>
+        <% else %>
+          <%= @topic.title %>
+        <% end %>
+      </h1>
+      <p class="topic-detail__meta">
+        in <%= link_to @topic.category.name, category_path(@topic.category) %>
+        by <%= link_to @topic.user.username, user_path(@topic.user.username) %>
+        <%= time_ago(@topic.created_at) %>
+      </p>
+    </div>
+  </div>
+
+  <% if @topic.body.present? %>
+    <div class="topic-detail__body"><%= simple_format(@topic.body) %></div>
+  <% end %>
+
+  <% if user_signed_in? && (@topic.user_id == current_user.id || current_user.moderator?) %>
+    <div class="topic-detail__actions">
+      <%= link_to "Edit", edit_topic_path(@topic) %>
+      <%= button_to "Delete", topic_path(@topic), method: :delete,
+            form: { data: { turbo_confirm: "Delete this topic?" } }, class: "btn btn--ghost" %>
+    </div>
+  <% end %>
+</article>
+
+<section class="comments">
+  <h2><%= pluralize(@topic.posts_count, "reply") %></h2>
+
+  <% if user_signed_in? %>
+    <div id="new_post">
+      <%= render "posts/form", topic: @topic, post: @post %>
+    </div>
+  <% else %>
+    <p class="muted"><%= link_to "Sign in", new_user_session_path %> to reply.</p>
+  <% end %>
+
+  <div id="posts" class="post-list">
+    <%= render partial: "posts/post", collection: @posts, as: :post %>
+  </div>
+</section>

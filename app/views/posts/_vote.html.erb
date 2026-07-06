@@ -1,0 +1,15 @@
+<% voted = post.votes.exists?(user_id: user&.id) %>
+<div class="vote__box">
+  <% if user %>
+    <% if voted %>
+      <%= button_to "▲", remove_upvote_topic_post_path(post.topic, post), method: :delete,
+            form: { data: { turbo_stream: true } }, class: "vote__btn vote__btn--on", "aria-label": "Remove upvote" %>
+    <% else %>
+      <%= button_to "▲", upvote_topic_post_path(post.topic, post), method: :post,
+            form: { data: { turbo_stream: true } }, class: "vote__btn", "aria-label": "Upvote" %>
+    <% end %>
+  <% else %>
+    <span class="vote__btn vote__btn--disabled" title="Sign in to vote">▲</span>
+  <% end %>
+  <span class="vote__count"><%= post.upvotes_count %></span>
+</div>

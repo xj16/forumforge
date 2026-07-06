@@ -1,0 +1,63 @@
+# See https://help.github.com/articles/ignoring-files for more about ignoring files.
+
+# Dependencies
+/node_modules
+/vendor/bundle
+
+# Build & compiled output
+/dist
+/build
+/target
+/bin/obj
+/app/assets/builds/*
+!/app/assets/builds/.keep
+/public/assets
+/public/packs
+/public/packs-test
+
+# Compiled bytecode / caches
+__pycache__/
+*.pyc
+.bundle/
+/tmp/*
+!/tmp/.keep
+!/tmp/pids/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
+/tmp/storage/*
+/tmp/cache/*
+/tmp/capybara
+
+# Logs
+/log/*
+!/log/.keep
+*.log
+
+# Environments / virtualenvs
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Rails secrets / keys — never commit these
+/config/master.key
+/config/credentials/*.key
+
+# Uploaded files in development
+/storage/*
+!/storage/.keep
+
+# Vagrant
+.vagrant
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# RSpec local state
+/spec/examples.txt
+/spec/tmp

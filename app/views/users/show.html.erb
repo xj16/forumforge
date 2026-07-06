@@ -1,0 +1,37 @@
+<% content_for :title, @user.username %>
+
+<%= turbo_stream_from "user_#{@user.id}" %>
+
+<header class="profile-header">
+  <%= avatar_tag(@user, size: 64) %>
+  <div>
+    <h1><%= @user.username %></h1>
+    <p class="profile-header__role"><%= @user.role.capitalize %></p>
+    <div id="reputation_<%= @user.id %>">
+      <%= render "users/reputation_badge", user: @user %>
+    </div>
+  </div>
+</header>
+
+<div class="profile-columns">
+  <section>
+    <h2>Topics</h2>
+    <ol class="topic-list">
+      <%= render partial: "topics/topic", collection: @topics, as: :topic %>
+    </ol>
+    <% if @topics.empty? %><p class="muted">No topics yet.</p><% end %>
+  </section>
+
+  <section>
+    <h2>Recent replies</h2>
+    <ul class="recent-posts">
+      <% @recent_posts.each do |post| %>
+        <li>
+          <%= link_to truncate(post.body, length: 80), topic_path(post.topic, anchor: dom_id(post)) %>
+          <span class="muted"><%= time_ago(post.created_at) %></span>
+        </li>
+      <% end %>
+    </ul>
+    <% if @recent_posts.empty? %><p class="muted">No replies yet.</p><% end %>
+  </section>
+</div>

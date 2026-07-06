@@ -1,0 +1,9 @@
+en:
+  hello: "Hello world"
+  forumforge:
+    tagline: "A modern community forum"
+  reputation:
+    topic_upvote: 10
+    post_upvote: 5
+    topic_created: 2
+    post_created: 1

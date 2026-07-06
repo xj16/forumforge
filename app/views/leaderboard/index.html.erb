@@ -1,0 +1,17 @@
+<% content_for :title, "Leaderboard" %>
+
+<h1>Leaderboard</h1>
+<p class="muted">Top members by community reputation.</p>
+
+<ol class="leaderboard">
+  <% @users.each_with_index do |user, i| %>
+    <li class="leaderboard__row">
+      <span class="leaderboard__rank">#<%= @pagy.offset + i + 1 %></span>
+      <%= avatar_tag(user) %>
+      <%= link_to user.username, user_path(user.username), class: "leaderboard__name" %>
+      <span class="leaderboard__rep"><%= number_with_delimiter(user.reputation) %> rep</span>
+    </li>
+  <% end %>
+</ol>
+
+<%== pagy_nav(@pagy) if @pagy.pages > 1 %>

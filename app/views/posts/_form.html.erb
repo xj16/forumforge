@@ -1,0 +1,22 @@
+<%= form_with model: [topic, post], class: "post-form" do |f| %>
+  <% if post.errors.any? %>
+    <div class="form-errors">
+      <ul>
+        <% post.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= f.hidden_field :parent_id if post.parent_id %>
+
+  <div class="field">
+    <%= f.text_area :body, rows: post.parent_id ? 3 : 4,
+          placeholder: post.parent_id ? "Write a reply…" : "Join the discussion…", "aria-label": "Reply body" %>
+  </div>
+
+  <div class="actions">
+    <%= f.submit post.parent_id ? "Reply" : "Comment", class: "btn btn--primary btn--sm" %>
+  </div>
+<% end %>

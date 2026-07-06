@@ -1,0 +1,46 @@
+<% content_for :title, "Edit account" %>
+
+<div class="auth-card">
+  <h1>Edit <%= resource_name.to_s.humanize %></h1>
+
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "form" }) do |f| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+
+    <div class="field">
+      <%= f.label :username %>
+      <%= f.text_field :username, autocomplete: "username" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :email %>
+      <%= f.email_field :email, autocomplete: "email" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password %> <em class="muted">(leave blank if you don't want to change it)</em>
+      <%= f.password_field :password, autocomplete: "new-password" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password_confirmation %>
+      <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
+    </div>
+
+    <div class="field">
+      <%= f.label :current_password %> <em class="muted">(we need your current password to confirm changes)</em>
+      <%= f.password_field :current_password, autocomplete: "current-password" %>
+    </div>
+
+    <div class="actions">
+      <%= f.submit "Update", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+
+  <h2>Cancel my account</h2>
+  <p>
+    <%= button_to "Delete my account", registration_path(resource_name), data: { turbo_confirm: "Are you sure?" },
+          method: :delete, class: "btn btn--ghost" %>
+  </p>
+
+  <%= link_to "Back", :back %>
+</div>

@@ -1,0 +1,30 @@
+<%#
+  `user` is passed explicitly by controllers; when this partial is rendered from
+  a Turbo Stream *broadcast* there is no controller (and thus no current_user),
+  so we fall back to nil. Vote state is then rendered in its signed-out form and
+  corrected per-user on the next interaction.
+%>
+<% viewer = local_assigns.fetch(:user) { defined?(current_user) ? current_user : nil } %>
+<li id="<%= dom_id(topic) %>" class="topic-row">
+  <div id="vote_topic_<%= topic.id %>" class="vote">
+    <%= render "topics/vote", topic: topic, user: viewer %>
+  </div>
+
+  <div class="topic-row__body">
+    <h2 class="topic-row__title">
+      <% if topic.link? %>
+        <%= link_to topic.title, topic.url, class: "topic-link", rel: "nofollow noopener", target: "_blank" %>
+        <span class="domain">(<%= topic.domain %>)</span>
+      <% else %>
+        <%= link_to topic.title, topic_path(topic) %>
+      <% end %>
+    </h2>
+
+    <p class="topic-row__meta">
+      in <%= link_to topic.category.name, category_path(topic.category) %>
+      by <%= link_to topic.user.username, user_path(topic.user.username) %>
+      <%= time_ago(topic.created_at) %>
+      &middot; <%= link_to pluralize(topic.posts_count, "comment"), topic_path(topic) %>
+    </p>
+  </div>
+</li>

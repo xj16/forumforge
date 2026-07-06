@@ -1,0 +1,13 @@
+<% content_for :title, "Categories" %>
+
+<h1>Categories</h1>
+
+<ul class="category-list">
+  <% @categories.each do |category| %>
+    <li class="category-card">
+      <h2><%= link_to category.name, category_path(category) %></h2>
+      <p class="muted"><%= category.description %></p>
+      <p class="category-card__count"><%= pluralize(category.topics_count, "topic") %></p>
+    </li>
+  <% end %>
+</ul>
