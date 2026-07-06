@@ -14,8 +14,10 @@ class PostsController < ApplicationController
     if @post.save
       ReputationJob.perform_later(current_user.id)
       respond_to do |format|
-        # The Turbo Stream broadcast from the model already appends the post for
-        # every subscriber; here we just reset the form for the submitter.
+        # The submitter's reply is appended to the thread by the model's
+        # after_create_commit Turbo Stream broadcast (see Post#broadcast_created),
+        # which reaches every subscriber — including this tab. The HTTP response
+        # therefore only needs to reset the composer form.
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
             "new_post",

@@ -29,6 +29,11 @@ Rails.application.configure do
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
 
+  # Allow Action Cable (Turbo Streams) websocket connections from the
+  # Capybara test server so live-update system specs work.
+  config.action_cable.disable_request_forgery_protection = true
+  config.action_cable.allowed_request_origins = [%r{https?://.*}]
+
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test if defined?(ActiveStorage)
 
