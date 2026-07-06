@@ -12,8 +12,8 @@ class ApplicationController < ActionController::Base
 
   # Allow username on sign up / account update.
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:username])
-    devise_parameter_sanitizer.permit(:account_update, keys: [:username])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :username ])
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :username ])
   end
 
   private
