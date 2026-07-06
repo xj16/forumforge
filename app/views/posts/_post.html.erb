@@ -3,7 +3,7 @@
   render this partial without a controller, so fall back to nil and render the
   signed-out variant. Each browser re-personalises on its next request.
 %>
-<% viewer = local_assigns.fetch(:user) { defined?(current_user) ? current_user : nil } %>
+<% viewer = local_assigns.fetch(:user) { current_viewer } %>
 <% can_manage = viewer && (post.user_id == viewer.id || viewer.moderator?) %>
 <div id="<%= dom_id(post) %>" class="post depth-<%= post.depth %>">
   <div class="post__gutter">

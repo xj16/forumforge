@@ -4,7 +4,7 @@
   so we fall back to nil. Vote state is then rendered in its signed-out form and
   corrected per-user on the next interaction.
 %>
-<% viewer = local_assigns.fetch(:user) { defined?(current_user) ? current_user : nil } %>
+<% viewer = local_assigns.fetch(:user) { current_viewer } %>
 <li id="<%= dom_id(topic) %>" class="topic-row">
   <div id="vote_topic_<%= topic.id %>" class="vote">
     <%= render "topics/vote", topic: topic, user: viewer %>

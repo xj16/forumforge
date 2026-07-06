@@ -20,14 +20,14 @@ Rails.application.routes.draw do
   resources :topics do
     member do
       post :upvote
-      delete :upvote, action: :remove_upvote
+      delete :upvote, action: :remove_upvote, as: :remove_upvote
     end
 
     # Nested replies (comments) with threaded structure.
     resources :posts, only: %i[create update destroy] do
       member do
         post :upvote
-        delete :upvote, action: :remove_upvote
+        delete :upvote, action: :remove_upvote, as: :remove_upvote
       end
     end
   end

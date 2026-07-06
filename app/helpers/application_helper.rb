@@ -24,4 +24,18 @@ module ApplicationHelper
 
     tag.meta(name: "current-user-id", content: current_user.id)
   end
+
+  # The signed-in user, resolved safely in ANY render context.
+  #
+  # Partials like topics/_topic and posts/_post are rendered both from
+  # controllers (where `current_user` works) and from Turbo Stream *broadcasts*
+  # (a background render with no Warden proxy, where `current_user` raises
+  # Devise::MissingWarden). This helper returns nil in the latter case so
+  # broadcasts render the signed-out variant; each browser re-personalises on
+  # its next request.
+  def current_viewer
+    current_user
+  rescue Devise::MissingWarden, NameError
+    nil
+  end
 end
