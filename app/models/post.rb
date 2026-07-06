@@ -40,11 +40,11 @@ class Post < ApplicationRecord
   include ActionView::RecordIdentifier
 
   def broadcast_created
-    if parent_id
-      broadcast_append_later_to topic, target: "replies_#{parent_id}", partial: "posts/post", locals: { post: self }
-    else
-      broadcast_append_later_to topic, target: "posts", partial: "posts/post", locals: { post: self }
-    end
+    target = parent_id ? "replies_#{parent_id}" : "posts"
+    # Synchronous broadcast (not the _later_ variant): delivery does not depend
+    # on a background worker being drained, which keeps live updates instant and
+    # makes system specs deterministic.
+    broadcast_append_to topic, target: target, partial: "posts/post", locals: { post: self }
     NotifyMentionsJob.perform_later(id)
   end
 

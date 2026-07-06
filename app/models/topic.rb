@@ -8,6 +8,8 @@
 # `after_create_commit`/`broadcasts_to` hooks below and TopicsController).
 class Topic < ApplicationRecord
   extend FriendlyId
+  include ActionView::RecordIdentifier # provides dom_id for broadcast lambdas
+
   friendly_id :slug_candidates, use: %i[slugged history]
 
   belongs_to :user
@@ -28,10 +30,10 @@ class Topic < ApplicationRecord
   scope :newest, -> { order(created_at: :desc) }
   scope :top, -> { order(upvotes_count: :desc, created_at: :desc) }
 
-  # Live-update every topic index/show subscribed to its category stream.
-  after_create_commit -> { broadcast_prepend_later_to "topics", target: "topics", partial: "topics/topic" }
-  after_update_commit -> { broadcast_replace_later_to self }
-  after_destroy_commit -> { broadcast_remove_to "topics" }
+  # Live-update every topic index/show subscribed to the "topics" stream.
+  after_create_commit -> { broadcast_prepend_to "topics", target: "topics", partial: "topics/topic" }
+  after_update_commit -> { broadcast_replace_to "topics", target: dom_id(self), partial: "topics/topic" }
+  after_destroy_commit -> { broadcast_remove_to "topics", target: dom_id(self) }
 
   # A link post points elsewhere; a text post is self-contained.
   def link?
