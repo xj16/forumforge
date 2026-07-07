@@ -29,7 +29,7 @@ gem "sidekiq", "~> 7.2"
 gem "redis", "~> 5.0"
 
 # Pagination & slugs
-gem "pagy", "~> 8.0"
+gem "pagy", "~> 43.5"
 gem "friendly_id", "~> 5.5"
 
 # Rate limiting / abuse protection (throttles votes, posts, sign-in — see
