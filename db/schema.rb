@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_01_01_000006) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_01_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -38,6 +38,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_01_000006) do
     t.index ["sluggable_type", "sluggable_id"], name: "index_friendly_id_slugs_on_sluggable_type_and_sluggable_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "recipient_id", null: false
+    t.bigint "actor_id", null: false
+    t.string "notifiable_type", null: false
+    t.bigint "notifiable_id", null: false
+    t.string "action", null: false
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["recipient_id", "created_at"], name: "index_notifications_on_recipient_id_and_created_at"
+    t.index ["recipient_id", "read_at"], name: "index_notifications_on_recipient_id_and_read_at"
+    t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
+  end
+
   create_table "posts", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "topic_id", null: false
@@ -47,8 +63,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_01_000006) do
     t.integer "replies_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.virtual "search_vector", type: :tsvector, as: "to_tsvector('english'::regconfig, COALESCE(body, ''::text))", stored: true
     t.index ["created_at"], name: "index_posts_on_created_at"
     t.index ["parent_id"], name: "index_posts_on_parent_id"
+    t.index ["search_vector"], name: "index_posts_on_search_vector", using: :gin
     t.index ["topic_id"], name: "index_posts_on_topic_id"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
@@ -64,8 +82,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_01_000006) do
     t.integer "posts_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.virtual "search_vector", type: :tsvector, as: "((setweight(to_tsvector('english'::regconfig, COALESCE(title, ''::character varying)::text), 'A'::\"char\") || setweight(to_tsvector('english'::regconfig, COALESCE(body, ''::text)), 'B'::\"char\")) || setweight(to_tsvector('english'::regconfig, COALESCE(url, ''::character varying)::text), 'B'::\"char\"))", stored: true
     t.index ["category_id"], name: "index_topics_on_category_id"
     t.index ["created_at"], name: "index_topics_on_created_at"
+    t.index ["search_vector"], name: "index_topics_on_search_vector", using: :gin
     t.index ["slug"], name: "index_topics_on_slug", unique: true
     t.index ["upvotes_count"], name: "index_topics_on_upvotes_count"
     t.index ["user_id"], name: "index_topics_on_user_id"
@@ -101,6 +121,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_01_000006) do
     t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
   end
 
+  add_foreign_key "notifications", "users", column: "actor_id"
+  add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "posts", "posts", column: "parent_id"
   add_foreign_key "posts", "topics"
   add_foreign_key "posts", "users"

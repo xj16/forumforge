@@ -55,4 +55,32 @@ RSpec.describe Post, type: :model do
       }.to have_enqueued_job(NotifyMentionsJob)
     end
   end
+
+  describe "reply notifications" do
+    it "notifies the topic author of a top-level reply" do
+      topic = create(:topic)
+      expect {
+        create(:post, topic: topic, user: create(:user))
+      }.to change {
+        Notification.where(recipient: topic.user, action: "reply").count
+      }.by(1)
+    end
+
+    it "notifies the parent comment's author of a nested reply" do
+      topic = create(:topic)
+      parent = create(:post, topic: topic, user: create(:user))
+      expect {
+        create(:post, topic: topic, parent: parent, user: create(:user))
+      }.to change {
+        Notification.where(recipient: parent.user, action: "reply").count
+      }.by(1)
+    end
+
+    it "does not notify the author for their own reply" do
+      topic = create(:topic)
+      expect {
+        create(:post, topic: topic, user: topic.user)
+      }.not_to change(Notification, :count)
+    end
+  end
 end

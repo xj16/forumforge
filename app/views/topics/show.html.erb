@@ -5,7 +5,7 @@
 <article class="topic-detail">
   <div class="topic-detail__head">
     <div id="vote_topic_<%= @topic.id %>" class="vote">
-      <%= render "topics/vote", topic: @topic, user: current_user %>
+      <%= render "topics/vote", topic: @topic, user: current_user, voted: @voted %>
     </div>
     <div class="topic-detail__title">
       <h1>
@@ -49,6 +49,6 @@
   <% end %>
 
   <div id="posts" class="post-list">
-    <%= render partial: "posts/post", collection: @posts, as: :post %>
+    <%= render partial: "posts/post", collection: @posts, as: :post, locals: { voted: @voted } %>
   </div>
 </section>

@@ -16,6 +16,7 @@ class User < ApplicationRecord
   has_many :topics, dependent: :destroy
   has_many :posts, dependent: :destroy
   has_many :votes, dependent: :destroy
+  has_many :notifications, foreign_key: :recipient_id, dependent: :destroy, inverse_of: :recipient
 
   ROLES = %w[member moderator admin].freeze
 

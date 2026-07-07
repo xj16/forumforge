@@ -1,0 +1,15 @@
+<li id="<%= dom_id(notification) %>" class="notification<%= ' notification--unread' unless notification.read? %>">
+  <div class="notification__body">
+    <p class="notification__text">
+      <%= link_to notification.actor.username, user_path(notification.actor.username), class: "post__author" %>
+      <%= notification.summary %>
+    </p>
+    <p class="notification__meta">
+      <% if notification.target_path %>
+        <%= link_to "View", read_notification_path(notification), data: { turbo_method: :patch } %>
+        &middot;
+      <% end %>
+      <%= time_ago(notification.created_at) %>
+    </p>
+  </div>
+</li>

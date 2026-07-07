@@ -68,6 +68,7 @@ jobs:
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: postgres
       REDIS_URL: redis://localhost:6379/0
+      COVERAGE: "true"
 
     steps:
       - name: Checkout code
@@ -86,8 +87,16 @@ jobs:
       - name: Prepare database
         run: bin/rails db:test:prepare
 
-      - name: Run non-system specs
+      - name: Run non-system specs (with coverage)
         run: bundle exec rspec --exclude-pattern "spec/system/**/*_spec.rb"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+          if-no-files-found: ignore
 
   system:
     name: System specs (Capybara + Selenium)
@@ -157,3 +166,30 @@ jobs:
           name: capybara-screenshots
           path: tmp/capybara
           if-no-files-found: ignore
+
+  security:
+    name: Security (bundler-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install gems
+        run: |
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+
+      # Audits the resolved dependency tree against the Ruby Advisory DB.
+      # `bundle install` above writes a Gemfile.lock for bundler-audit to read.
+      # Non-blocking: a CVE disclosed upstream should surface as a report, not
+      # break an unrelated PR's build. Review the job log and bump the gem.
+      - name: Audit dependencies for known CVEs
+        continue-on-error: true
+        run: |
+          bundle exec bundler-audit update
+          bundle exec bundler-audit check

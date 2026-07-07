@@ -14,7 +14,7 @@
 </div>
 
 <ol id="topics" class="topic-list">
-  <%= render partial: "topics/topic", collection: @topics, as: :topic %>
+  <%= render partial: "topics/topic", collection: @topics, as: :topic, locals: { voted: @voted } %>
 </ol>
 
 <% if @topics.empty? %>

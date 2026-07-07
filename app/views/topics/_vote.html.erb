@@ -1,4 +1,4 @@
-<% voted = voted_by?(topic, user) %>
+<% voted = voted_by?(topic, user, local_assigns[:voted]) %>
 <div class="vote__box">
   <% if user %>
     <% if voted %>

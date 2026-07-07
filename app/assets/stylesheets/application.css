@@ -170,6 +170,67 @@ textarea { resize: vertical; }
 }
 .pagy.nav .current { background: var(--primary); border-color: var(--primary); color: #1a1206; }
 
+/* Header search */
+.site-search { flex: 1; max-width: 320px; }
+.site-search__input {
+  width: 100%; padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit;
+}
+.site-search__input:focus { outline: none; border-color: var(--accent); }
+
+/* Search page */
+.search-page h1 { font-size: 22px; }
+.search-page__form { display: flex; gap: 10px; margin: 12px 0 20px; }
+.search-page__input { flex: 1; }
+.search-page__results { min-height: 60px; }
+.search-hint, .search-empty { color: var(--muted); padding: 16px 0; }
+.search-section { margin-bottom: 24px; }
+.search-section__title { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 10px; }
+.search-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.search-result {
+  display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+}
+.search-result__title { font-size: 16px; margin: 0 0 4px; }
+.search-result__snippet { margin: 0 0 4px; color: var(--text); }
+.search-result__meta { color: var(--muted); font-size: 13px; margin: 0; }
+.search-result mark { background: var(--primary); color: #1a1206; padding: 0 2px; border-radius: 3px; }
+
+/* Notifications bell + inbox */
+.bell { position: relative; display: inline-flex; align-items: center; }
+.bell__icon { font-size: 18px; line-height: 1; }
+.bell__count {
+  position: absolute; top: -6px; right: -8px; min-width: 16px; height: 16px;
+  padding: 0 4px; border-radius: 999px; background: var(--primary); color: #1a1206;
+  font-size: 11px; font-weight: 800; line-height: 16px; text-align: center;
+}
+.bell__count[hidden] { display: none; }
+.notifications { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.notification {
+  display: flex; gap: 12px; align-items: flex-start; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px;
+}
+.notification--unread { border-left: 3px solid var(--primary); }
+.notification__body { flex: 1; }
+.notification__text { margin: 0 0 2px; }
+.notification__meta { color: var(--muted); font-size: 13px; margin: 0; }
+.notifications-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/*
+ * Entrance animation for live-appended rows. Uses @keyframes ONLY (no CSS
+ * transitions) so it is visible even in browsers that strip transitions, and
+ * makes the real-time nature of new comments / topics obvious.
+ */
+@keyframes ff-fade-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.topic-row, .post, .notification { animation: ff-fade-in .28s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .topic-row, .post, .notification { animation: none; }
+}
+
 @media (max-width: 640px) {
   .profile-columns { grid-template-columns: 1fr; }
+  .site-search { max-width: 160px; }
 }

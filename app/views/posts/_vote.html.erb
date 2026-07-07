@@ -1,4 +1,4 @@
-<% voted = post.votes.exists?(user_id: user&.id) %>
+<% voted = voted_by?(post, user, local_assigns[:voted]) %>
 <div class="vote__box">
   <% if user %>
     <% if voted %>

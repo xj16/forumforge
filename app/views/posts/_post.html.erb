@@ -4,11 +4,12 @@
   signed-out variant. Each browser re-personalises on its next request.
 %>
 <% viewer = local_assigns.fetch(:user) { current_viewer } %>
+<% voted = local_assigns[:voted] %>
 <% can_manage = viewer && (post.user_id == viewer.id || viewer.moderator?) %>
 <div id="<%= dom_id(post) %>" class="post depth-<%= post.depth %>">
   <div class="post__gutter">
     <div id="vote_post_<%= post.id %>" class="vote vote--sm">
-      <%= render "posts/vote", post: post, user: viewer %>
+      <%= render "posts/vote", post: post, user: viewer, voted: voted %>
     </div>
   </div>
 
@@ -40,7 +41,7 @@
     <% end %>
 
     <div id="replies_<%= post.id %>" class="post__replies">
-      <%= render partial: "posts/post", collection: post.replies.chronological, as: :post, locals: { user: viewer } %>
+      <%= render partial: "posts/post", collection: post.replies.chronological, as: :post, locals: { user: viewer, voted: voted } %>
     </div>
   </div>
 </div>

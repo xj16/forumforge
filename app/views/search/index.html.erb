@@ -1,0 +1,24 @@
+<% content_for :title, @query.present? ? "Search: #{@query}" : "Search" %>
+
+<div class="search-page">
+  <h1>Search</h1>
+
+  <%#
+    Full-page search form. `data-turbo-frame="search_results"` scopes the GET
+    so results replace only the frame below — the header box shares the same
+    target, so both drive the same live results region.
+  %>
+  <%= form_with url: search_path, method: :get, class: "search-page__form",
+        data: { turbo_frame: "search_results", controller: "search",
+                search_target: "form", turbo_action: "advance" } do |f| %>
+    <%= f.search_field :q, value: @query, autofocus: @query.blank?,
+          placeholder: "Search topics and comments…", autocomplete: "off",
+          class: "search-page__input", "aria-label": "Search query",
+          data: { search_target: "input", action: "input->search#submit" } %>
+    <%= f.submit "Search", class: "btn btn--primary" %>
+  <% end %>
+
+  <div class="search-page__results">
+    <%= render "search/results" %>
+  </div>
+</div>

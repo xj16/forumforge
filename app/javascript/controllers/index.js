@@ -7,3 +7,6 @@ application.register("reply", ReplyController)
 
 import FlashController from "controllers/flash_controller"
 application.register("flash", FlashController)
+
+import SearchController from "controllers/search_controller"
+application.register("search", SearchController)

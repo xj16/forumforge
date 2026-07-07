@@ -5,9 +5,10 @@
   corrected per-user on the next interaction.
 %>
 <% viewer = local_assigns.fetch(:user) { current_viewer } %>
+<% voted = local_assigns[:voted] %>
 <li id="<%= dom_id(topic) %>" class="topic-row">
   <div id="vote_topic_<%= topic.id %>" class="vote">
-    <%= render "topics/vote", topic: topic, user: viewer %>
+    <%= render "topics/vote", topic: topic, user: viewer, voted: voted %>
   </div>
 
   <div class="topic-row__body">

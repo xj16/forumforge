@@ -1,15 +1,22 @@
 # ForumForge
 
-> A modern community forum built with Ruby on Rails 7 + Hotwire.
+> A real-time, self-hostable community forum — Rails 7 + Hotwire, no JS build step.
 
 ForumForge is a fully-featured, open-source discussion platform: part
 Reddit-style **link aggregator**, part threaded discussion forum. It combines
 classic forum mechanics (categories, threads, nested replies, reputation) with
-a modern, no-build **Hotwire** front end, so threads and vote counts update
-**live** for everyone in the thread — no page reloads, no client-side framework.
+a modern, no-build **Hotwire** front end, so threads, vote counts, search
+results, and notifications update **live** — no page reloads, no client-side
+framework.
 
-![CI](https://github.com/xj16/forumforge/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/xj16/forumforge/actions/workflows/ci.yml/badge.svg)](https://github.com/xj16/forumforge/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Ruby](https://img.shields.io/badge/Ruby-3.3-CC342D.svg)](.ruby-version)
+[![Rails](https://img.shields.io/badge/Rails-7.1-D30001.svg)](Gemfile)
+[![Coverage: SimpleCov](https://img.shields.io/badge/coverage-SimpleCov-brightgreen.svg)](#running-the-tests)
+
+**One-command run:** `docker compose up --build` → <http://localhost:3000>.
+Add `--profile demo` to seed data and watch a thread update itself live.
 
 ---
 
@@ -42,16 +49,25 @@ end to end in an afternoon:
 - **Live-updating threads** — new replies, edits, deletions, and vote counts are
   pushed to every viewer via **Turbo Streams** broadcast from model callbacks
   over Action Cable (Redis).
+- **Full-text search** — ranked search over topics and comments, powered by
+  PostgreSQL `tsvector` **generated columns** + **GIN indexes** (no extra gem).
+  The header box streams **debounced, highlighted results** into a Turbo Frame
+  as you type; a `/search` page mirrors it. Injection- and XSS-safe by design.
+- **Notifications** — a real in-app inbox with a live **unread bell**. Replies,
+  `@username` mentions, and upvotes create `Notification` records that stream to
+  the recipient's browser over a per-user Turbo Stream; mentions also send an
+  email via `ForumMailer`.
 - **Voting + reputation** — polymorphic upvotes on both topics and posts. A
   user's reputation is recomputed asynchronously by a **Sidekiq** job whenever
-  their content is voted on, and the reputation badge updates live.
+  their content is voted on, and the reputation badge updates live. The viewer's
+  vote state is preloaded per page (one query — no N+1).
 - **Leaderboard** — members ranked by reputation.
 - **Categories** — topics grouped into categories with per-category feeds.
 - **Sorting** — `hot` (time-decayed score), `new`, and `top` feeds.
 - **Authentication** — sign up / sign in / password reset via **Devise**, with
   usernames and role-based permissions (`member`, `moderator`, `admin`).
-- **Mentions** — `@username` mentions in replies fan out through a background
-  job (`NotifyMentionsJob`) on a low-priority Sidekiq queue.
+- **Rate limiting** — `rack-attack` throttles voting, posting, and sign-in per
+  IP to blunt spam and brute-force attempts.
 - **Admin dashboard** — the Sidekiq web UI, mounted at `/sidekiq` and locked to
   admins.
 - **No JavaScript build step** — Hotwire via `importmap-rails` and CSS via
@@ -68,12 +84,14 @@ end to end in an afternoon:
 | Database         | **PostgreSQL**                                     |
 | Background jobs  | **Sidekiq** on **Redis**                           |
 | Real-time        | Turbo Streams over Action Cable (**Redis**)        |
+| Search           | PostgreSQL **full-text search** (`tsvector` generated columns + GIN) |
 | Front end        | **Hotwire** (Turbo + Stimulus), importmap, Propshaft |
 | Auth             | **Devise**                                         |
+| Security         | **rack-attack** rate limiting, CSP (prod), bundler-audit |
 | Slugs / paging   | FriendlyId, Pagy                                   |
-| Tests            | **RSpec**, FactoryBot, **Capybara + Selenium** (headless Chrome), shoulda-matchers |
-| CI               | **GitHub Actions**                                 |
-| Deploy           | **Docker** & **Heroku** (`app.json`, `Procfile`)   |
+| Tests            | **RSpec**, FactoryBot, **Capybara + Selenium** (headless Chrome), shoulda-matchers, **SimpleCov** |
+| CI               | **GitHub Actions** (lint, specs, system, security) |
+| Deploy           | **Docker** (+ `docker-compose`) & **Heroku** (`app.json`, `Procfile`) |
 
 ---
 
@@ -87,11 +105,16 @@ User 1───* Topic *───1 Category
  │           │    │
  *           *    │
 Vote (polymorphic: votable = Topic | Post)
+
+Notification (recipient, actor, polymorphic notifiable = Topic | Post, action, read_at)
 ```
 
-- `Topic` — a thread; text post (`body`) or link post (`url`).
-- `Post` — a reply; `parent_id` makes replies a tree.
+- `Topic` — a thread; text post (`body`) or link post (`url`). Has a
+  `search_vector` generated `tsvector` column (title `A`, body/url `B`).
+- `Post` — a reply; `parent_id` makes replies a tree. Also searchable.
 - `Vote` — a polymorphic upvote, unique per `(user, votable)`.
+- `Notification` — an inbox item for a `recipient`, created on mention/reply/
+  upvote and pushed live to a per-user Turbo Stream.
 - Counters (`upvotes_count`, `posts_count`, `topics_count`) are denormalized
   and kept in sync by callbacks / `counter_cache`.
 - Reputation points (see `app/models/reputation.rb`): topic upvote `+10`,
@@ -108,10 +131,12 @@ When a reply is created, the `Post` model broadcasts a Turbo Stream:
 after_create_commit :broadcast_created
 
 def broadcast_created
-  broadcast_append_later_to topic,          # stream name = the topic
-    target: "posts",                        # DOM id to append into
+  target = parent_id ? "replies_#{parent_id}" : "posts"
+  broadcast_append_to topic,                # stream name = the topic
+    target: target,                         # DOM id to append into
     partial: "posts/post", locals: { post: self }
   NotifyMentionsJob.perform_later(id)       # async @mention fan-out
+  notify_reply_recipient                    # in-app notification
 end
 ```
 
@@ -121,9 +146,30 @@ Any browser on that topic page subscribes with one line in the view:
 <%= turbo_stream_from @topic %>
 ```
 
-The broadcast is enqueued (`_later_`) so it runs in Sidekiq, and Action Cable
-(backed by Redis) delivers the rendered HTML fragment to every subscriber. The
-same pattern drives live vote counts and the reputation badge.
+Action Cable (backed by Redis) delivers the rendered HTML fragment to every
+subscriber. The same pattern drives live vote counts, the reputation badge, and
+the notification bell (each on its own per-user or per-topic stream).
+
+## How it works: full-text search
+
+Search needs **no gem and no triggers**. A migration adds a `STORED`,
+generated `tsvector` column to `topics` and `posts` and a GIN index on each:
+
+```sql
+ALTER TABLE topics ADD COLUMN search_vector tsvector
+  GENERATED ALWAYS AS (
+    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(body,  '')), 'B')
+  ) STORED;
+CREATE INDEX ON topics USING gin (search_vector);
+```
+
+Postgres keeps the vector in sync on every write. `Searchable#search` binds the
+query with `websearch_to_tsquery` (injection-safe) and ranks with `ts_rank`;
+`search_highlight` uses `ts_headline` and escapes the source *before* inserting
+`<mark>` tags (XSS-safe). The header box debounces input in a Stimulus
+controller and streams ranked results into a Turbo Frame — live search with
+progressive enhancement (it still works with JS off).
 
 ---
 
@@ -172,8 +218,20 @@ bundle exec sidekiq -C config/sidekiq.yml
 
 Open <http://localhost:3000>. The seed data creates several users — log in as
 any of `ada`, `linus`, `grace`, `dennis`, `margaret`, or `admin` with the
-password **`password123`**. The `admin` user can reach the Sidekiq dashboard at
-`/sidekiq`.
+password **`password123`**. `grace` is a **moderator**; `admin` is an **admin**
+and can reach the Sidekiq dashboard at `/sidekiq`.
+
+### Watch it update live
+
+With a topic open in your browser, run the demo bot in another terminal:
+
+```bash
+bin/rails demo:bot                 # posts replies + votes on the hot topic
+TOPIC=<slug> bin/rails demo:bot    # target a specific topic
+```
+
+Comments and vote counts animate in without a page reload — the real-time path
+end to end, no second browser needed.
 
 ---
 
@@ -191,9 +249,22 @@ The `spec/system/live_thread_spec.rb` example is tagged `js: true` and runs in
 **headless Chrome via Selenium** to verify that a reply appears without a full
 page reload. Rack-test system specs cover the non-JS flows.
 
-CI (GitHub Actions, `.github/workflows/ci.yml`) runs three jobs on every push
-and PR: **RuboCop lint**, the **RSpec** suite against Postgres + Redis service
-containers, and the **Selenium system specs** with a real headless Chrome.
+Beyond the model layer, specs cover the harder subsystems: **full-text search**
+(ranking, matching, injection/XSS safety), **notifications** (mention/reply/
+upvote fan-out, dedup, authorization), **rate limiting** (Rack::Attack
+throttles engaging), and a **query-count spec** that proves the feed has no
+vote-state N+1 regardless of row count.
+
+**Coverage** is measured with **SimpleCov** (set `COVERAGE=true`):
+
+```bash
+COVERAGE=true bundle exec rspec   # writes coverage/index.html
+```
+
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs four jobs on every push
+and PR: **RuboCop lint**, the **RSpec** suite (with coverage) against Postgres +
+Redis service containers, the **Selenium system specs** with a real headless
+Chrome, and a **bundler-audit** dependency-CVE scan.
 
 ---
 
@@ -207,7 +278,26 @@ The `app.json` provisions **Heroku Postgres** and **Heroku Redis**, runs
 migrations on release, seeds on first deploy, and boots a `web` + `worker`
 dyno (Sidekiq). The `Procfile` defines all three process types.
 
-### Docker
+### Docker Compose (one command)
+
+The fastest way to run the whole stack — web, Sidekiq worker, Postgres, and
+Redis — locally:
+
+```bash
+docker compose up --build
+# → http://localhost:3000
+```
+
+Add the **demo profile** to seed realistic data and start a bot that posts
+replies and casts votes on a schedule, so an open thread visibly updates in
+real time:
+
+```bash
+docker compose --profile demo up --build
+# open a topic and watch comments + vote counts animate in live
+```
+
+### Docker (single image)
 
 ```bash
 docker build -t forumforge .
@@ -227,17 +317,21 @@ assets, and runs as a non-root user.
 
 ```
 app/
-  controllers/        # topics, posts, categories, users, leaderboard, Devise
-  models/             # User, Category, Topic, Post, Vote, Reputation
+  controllers/        # topics, posts, search, notifications, categories, users, …
+  models/             # User, Category, Topic, Post, Vote, Notification, Reputation
+    concerns/         # Searchable (Postgres full-text search)
+  models/voted_set.rb # per-page preloaded vote state (kills the vote N+1)
   jobs/               # ReputationJob, NotifyMentionsJob (Sidekiq)
-  views/              # ERB + Turbo Stream partials
-  javascript/         # Stimulus controllers (reply toggle, flash auto-dismiss)
+  mailers/            # ForumMailer (@mention emails)
+  views/              # ERB + Turbo Stream partials (search, notifications, …)
+  javascript/         # Stimulus controllers (reply toggle, flash, debounced search)
   assets/stylesheets/ # single hand-written CSS file (Propshaft, no build)
-config/               # routes, environments, Sidekiq, Devise, importmap
-db/migrate/           # schema migrations + friendly_id slugs
+config/               # routes, environments, Sidekiq, Devise, importmap, rack_attack
+db/migrate/           # schema migrations (search vectors, notifications) + slugs
+lib/tasks/demo.rake   # demo:bot — live-activity generator
 spec/                 # RSpec: models, requests, jobs, system (Capybara+Selenium)
-.github/workflows/    # CI
-Dockerfile, app.json, Procfile   # deployment
+.github/              # CI workflow + Dependabot
+Dockerfile, docker-compose.yml, app.json, Procfile   # deployment
 ```
 
 ---

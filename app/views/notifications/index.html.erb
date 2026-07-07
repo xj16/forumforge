@@ -1,0 +1,18 @@
+<% content_for :title, "Notifications" %>
+
+<div class="notifications-header">
+  <h1>Notifications</h1>
+  <% if current_user.notifications.unread.exists? %>
+    <%= button_to "Mark all read", read_all_notifications_path, method: :post, class: "btn btn--ghost btn--sm" %>
+  <% end %>
+</div>
+
+<% if @notifications.empty? %>
+  <p class="empty">No notifications yet. When someone replies to you, mentions you, or upvotes your posts, it shows up here.</p>
+<% else %>
+  <ol class="notifications">
+    <%= render partial: "notifications/notification", collection: @notifications, as: :notification %>
+  </ol>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% end %>

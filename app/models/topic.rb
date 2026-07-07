@@ -9,6 +9,7 @@
 class Topic < ApplicationRecord
   extend FriendlyId
   include ActionView::RecordIdentifier # provides dom_id for broadcast lambdas
+  include Searchable # full-text search over title/body/url via search_vector
 
   friendly_id :slug_candidates, use: %i[slugged history]
 

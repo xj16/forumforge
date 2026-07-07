@@ -61,3 +61,6 @@ Thumbs.db
 # RSpec local state
 /spec/examples.txt
 /spec/tmp
+
+# Test coverage output (SimpleCov)
+/coverage

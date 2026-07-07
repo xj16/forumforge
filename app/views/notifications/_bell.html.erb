@@ -1,0 +1,9 @@
+<%#
+  The header notification bell. `count` is passed by the layout (from
+  Notification.unread_count_for) and by the live Turbo Stream broadcast that
+  replaces #notification_bell whenever a new notification arrives.
+%>
+<%= link_to notifications_path, id: "notification_bell", class: "bell", "aria-label": "Notifications" do %>
+  <span class="bell__icon" aria-hidden="true">🔔</span>
+  <span class="bell__count" <%= "hidden" if count.to_i.zero? %>><%= count.to_i > 99 ? "99+" : count %></span>
+<% end %>

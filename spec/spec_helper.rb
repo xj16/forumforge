@@ -1,5 +1,23 @@
 # frozen_string_literal: true
 
+# Test coverage. Started before any application code is required (so every line
+# is tracked) and only when COVERAGE is set, keeping normal local runs fast. CI
+# sets COVERAGE=true on the RSpec job.
+if ENV["COVERAGE"]
+  require "simplecov"
+  SimpleCov.start "rails" do
+    enable_coverage :branch
+    add_filter "/spec/"
+    add_filter "/config/"
+    add_filter "/vendor/"
+    add_group "Models", "app/models"
+    add_group "Controllers", "app/controllers"
+    add_group "Jobs", "app/jobs"
+    add_group "Helpers", "app/helpers"
+    add_group "Mailers", "app/mailers"
+  end
+end
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true

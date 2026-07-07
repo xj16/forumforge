@@ -1,0 +1,18 @@
+<h1>You were mentioned on ForumForge</h1>
+
+<p>
+  <strong><%= @actor.username %></strong> mentioned you in a reply on
+  <strong><%= @topic.title %></strong>:
+</p>
+
+<blockquote style="border-left:3px solid #ccc; margin:0; padding:8px 12px; color:#333;">
+  <%= truncate(@post.body, length: 300) %>
+</blockquote>
+
+<p>
+  <%= link_to "View the discussion", topic_url(@topic, anchor: "post_#{@post.id}") %>
+</p>
+
+<p style="color:#888; font-size:13px;">
+  You are receiving this because your username was mentioned. — ForumForge
+</p>

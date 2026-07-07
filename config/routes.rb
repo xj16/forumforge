@@ -13,6 +13,10 @@ Rails.application.routes.draw do
     mount Sidekiq::Web => "/sidekiq"
   end
 
+  # Full-text search over topics and posts (also answers the header search
+  # box's debounced turbo-frame requests).
+  get "search", to: "search#index"
+
   # Categories group threads.
   resources :categories, only: %i[index show]
 
@@ -30,6 +34,12 @@ Rails.application.routes.draw do
         delete :upvote, action: :remove_upvote, as: :remove_upvote
       end
     end
+  end
+
+  # In-app notification inbox + live bell.
+  resources :notifications, only: %i[index] do
+    member { patch :read }
+    collection { post :read_all }
   end
 
   # Public user profiles with reputation.

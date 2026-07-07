@@ -21,6 +21,21 @@ class Vote < ApplicationRecord
   def increment_and_reward
     votable.class.increment_counter(:upvotes_count, votable_id)
     ReputationJob.perform_later(votable.user_id)
+    notify_author
+  end
+
+  # Notify the content author that their topic/post was upvoted. Skipped for
+  # self-votes and de-duplicated by Notification.notify.
+  def notify_author
+    action = votable.is_a?(Topic) ? "topic_upvote" : "post_upvote"
+    Notification.notify(
+      recipient: votable.user,
+      actor: user,
+      notifiable: votable,
+      action: action
+    )
+  rescue StandardError => e
+    Rails.logger.warn("[Vote] upvote notification failed: #{e.message}")
   end
 
   def decrement_and_penalize

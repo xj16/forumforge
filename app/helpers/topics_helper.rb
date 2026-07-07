@@ -14,8 +14,16 @@ module TopicsHelper
     )
   end
 
-  def voted_by?(votable, user)
+  # Whether `user` has upvoted `votable`.
+  #
+  # Prefers a preloaded VotedSet (`voted`), which answers from memory with zero
+  # queries — this is what controller-rendered pages pass so the feed and thread
+  # have no per-row vote N+1. When no set is available (e.g. a Turbo Stream
+  # broadcast re-rendering a single row) it falls back to a scoped existence
+  # check for just that one record.
+  def voted_by?(votable, user, voted = nil)
     return false if user.nil?
+    return voted.voted?(votable) if voted
 
     votable.votes.exists?(user_id: user.id)
   end

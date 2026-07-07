@@ -12,6 +12,8 @@ AllCops:
     - "node_modules/**/*"
     - "spec/**/*"
     - "config/**/*"
+    # Operational rake tasks (scripts, heavy on puts / long-running loops).
+    - "lib/tasks/**/*"
 
 # The reputation SQL scope is intentionally one line.
 Layout/LineLength:

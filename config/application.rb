@@ -27,6 +27,9 @@ module ForumForge
     # Use Sidekiq for background jobs.
     config.active_job.queue_adapter = :sidekiq
 
+    # Rate limiting / abuse protection (see config/initializers/rack_attack.rb).
+    config.middleware.use Rack::Attack
+
     # Generators: use RSpec and FactoryBot.
     config.generators do |g|
       g.test_framework :rspec,

@@ -32,6 +32,10 @@ gem "redis", "~> 5.0"
 gem "pagy", "~> 8.0"
 gem "friendly_id", "~> 5.5"
 
+# Rate limiting / abuse protection (throttles votes, posts, sign-in — see
+# config/initializers/rack_attack.rb).
+gem "rack-attack", "~> 6.7"
+
 # Windows/JRuby timezone data
 gem "tzinfo-data", platforms: %i[windows jruby]
 
@@ -49,6 +53,8 @@ end
 group :development do
   gem "web-console"
   gem "rubocop-rails-omakase", require: false
+  # Audits Gemfile.lock against the Ruby Advisory DB (also run in CI).
+  gem "bundler-audit", "~> 0.9", require: false
 end
 
 group :test do
@@ -56,4 +62,6 @@ group :test do
   gem "selenium-webdriver", "~> 4.18"
   gem "shoulda-matchers", "~> 6.1"
   gem "database_cleaner-active_record", "~> 2.1"
+  # Test coverage reporting (writes coverage/ and a SimpleCov summary).
+  gem "simplecov", "~> 0.22", require: false
 end

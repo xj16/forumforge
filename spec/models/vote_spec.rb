@@ -42,4 +42,31 @@ RSpec.describe Vote, type: :model do
       }.to have_enqueued_job(ReputationJob).with(topic.user_id)
     end
   end
+
+  describe "upvote notifications" do
+    it "notifies the topic author when their topic is upvoted" do
+      topic = create(:topic)
+      expect {
+        create(:vote, votable: topic, user: create(:user))
+      }.to change {
+        Notification.where(recipient: topic.user, action: "topic_upvote").count
+      }.by(1)
+    end
+
+    it "notifies the post author when their reply is upvoted" do
+      post = create(:post)
+      expect {
+        create(:vote, votable: post, user: create(:user))
+      }.to change {
+        Notification.where(recipient: post.user, action: "post_upvote").count
+      }.by(1)
+    end
+
+    it "does not notify a user for upvoting their own content" do
+      topic = create(:topic)
+      expect {
+        create(:vote, votable: topic, user: topic.user)
+      }.not_to change(Notification, :count)
+    end
+  end
 end

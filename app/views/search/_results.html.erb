@@ -1,0 +1,65 @@
+<%#
+  The live-updating results frame. Re-rendered on every (debounced) keystroke
+  from the header search box, and also as the body of the full /search page.
+  Matched terms are wrapped in <mark> by Postgres ts_headline (see Searchable).
+%>
+<turbo-frame id="search_results">
+  <% if @query.blank? %>
+    <p class="search-hint muted">Type to search topics and comments…</p>
+  <% elsif @topics.empty? && @posts.empty? %>
+    <p class="search-empty">No results for <strong><%= @query %></strong>.</p>
+  <% else %>
+    <% if @topics.any? %>
+      <section class="search-section">
+        <h2 class="search-section__title"><%= pluralize(@topics.size, "topic") %></h2>
+        <ol class="search-list">
+          <% @topics.each do |topic| %>
+            <li class="search-result">
+              <div id="vote_topic_<%= topic.id %>" class="vote vote--sm">
+                <%= render "topics/vote", topic: topic, user: current_user, voted: @voted %>
+              </div>
+              <div class="search-result__body">
+                <h3 class="search-result__title">
+                  <%= link_to topic.title, topic_path(topic) %>
+                  <% if topic.link? %><span class="domain">(<%= topic.domain %>)</span><% end %>
+                </h3>
+                <p class="search-result__snippet">
+                  <%= topic.search_highlight(topic.body.present? ? :body : :title, @query) %>
+                </p>
+                <p class="search-result__meta">
+                  in <%= link_to topic.category.name, category_path(topic.category) %>
+                  by <%= topic.user.username %>
+                  &middot; <%= pluralize(topic.posts_count, "comment") %>
+                </p>
+              </div>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+    <% end %>
+
+    <% if @posts.any? %>
+      <section class="search-section">
+        <h2 class="search-section__title"><%= pluralize(@posts.size, "comment") %></h2>
+        <ol class="search-list">
+          <% @posts.each do |post| %>
+            <li class="search-result">
+              <div id="vote_post_<%= post.id %>" class="vote vote--sm">
+                <%= render "posts/vote", post: post, user: current_user, voted: @voted %>
+              </div>
+              <div class="search-result__body">
+                <p class="search-result__snippet">
+                  <%= link_to post.search_highlight(:body, @query), topic_path(post.topic, anchor: dom_id(post)) %>
+                </p>
+                <p class="search-result__meta">
+                  by <%= post.user.username %>
+                  in <%= link_to post.topic.title, topic_path(post.topic) %>
+                </p>
+              </div>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+    <% end %>
+  <% end %>
+</turbo-frame>

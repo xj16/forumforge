@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-# Scans a newly created post body for @username mentions and (in a real
-# deployment) would notify the mentioned users by email. Kept lightweight and
-# side-effect-free here so it is safe to run in CI, but demonstrates the async
-# fan-out pattern on the `low` priority Sidekiq queue.
+# Scans a newly created post body for @username mentions and fans out
+# notifications to the mentioned users: an in-app Notification (which pushes a
+# live bell update via Turbo Streams) plus an email via ForumMailer.
+#
+# Runs on the low-priority Sidekiq queue so it never slows down posting.
 class NotifyMentionsJob < ApplicationJob
   queue_as :low
 
@@ -18,8 +19,13 @@ class NotifyMentionsJob < ApplicationJob
 
     mentioned = User.where(username: usernames).where.not(id: post.user_id)
     mentioned.find_each do |user|
-      Rails.logger.info("[NotifyMentionsJob] #{user.username} mentioned in post ##{post.id}")
-      # ForumMailer.mention(user, post).deliver_later  # wired up in production
+      Notification.notify(
+        recipient: user,
+        actor: post.user,
+        notifiable: post,
+        action: "mention"
+      )
+      ForumMailer.mention(user, post).deliver_later
     end
   end
 end

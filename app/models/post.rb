@@ -6,6 +6,8 @@
 # New and updated posts are broadcast to everyone viewing the parent topic via
 # Turbo Streams, giving live-updating threads without a page refresh.
 class Post < ApplicationRecord
+  include Searchable # full-text search over body via search_vector
+
   belongs_to :user
   belongs_to :topic, counter_cache: :posts_count, touch: true
   belongs_to :parent, class_name: "Post", optional: true, counter_cache: false
@@ -46,6 +48,22 @@ class Post < ApplicationRecord
     # makes system specs deterministic.
     broadcast_append_to topic, target: target, partial: "posts/post", locals: { post: self }
     NotifyMentionsJob.perform_later(id)
+    notify_reply_recipient
+  end
+
+  # Tell the author of the thing being replied to that they got a reply. A reply
+  # to a comment notifies that comment's author; a top-level reply notifies the
+  # topic's author. Notification.notify skips self-replies and duplicates.
+  def notify_reply_recipient
+    recipient = parent ? parent.user : topic.user
+    Notification.notify(
+      recipient: recipient,
+      actor: user,
+      notifiable: self,
+      action: "reply"
+    )
+  rescue StandardError => e
+    Rails.logger.warn("[Post] reply notification failed: #{e.message}")
   end
 
   def parent_belongs_to_same_topic

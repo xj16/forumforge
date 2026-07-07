@@ -12,12 +12,19 @@ class TopicsController < ApplicationController
     scope = scope.where(category: Category.friendly.find(params[:category])) if params[:category].present?
     scope = apply_sort(scope)
     @pagy, @topics = pagy(scope)
+    # One query loads the viewer's votes for every topic on the page, so the
+    # vote partials never fire a per-row `exists?` (see VotedSet).
+    @voted = VotedSet.for(current_user, @topics)
   end
 
   # GET /topics/:id
   def show
     @posts = @topic.posts.roots.includes(:user, replies: :user).chronological
     @post = Post.new
+    # Preload the viewer's votes for the topic + every rendered comment (and
+    # their replies) in a single query to avoid an N+1 across the thread.
+    votables = [@topic] + @posts + @posts.flat_map(&:replies)
+    @voted = VotedSet.for(current_user, votables)
   end
 
   # GET /topics/new

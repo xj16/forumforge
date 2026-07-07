@@ -1,0 +1,12 @@
+You were mentioned on ForumForge
+================================
+
+<%= @actor.username %> mentioned you in a reply on "<%= @topic.title %>":
+
+  <%= truncate(@post.body, length: 300) %>
+
+View the discussion:
+<%= topic_url(@topic, anchor: "post_#{@post.id}") %>
+
+--
+You are receiving this because your username was mentioned. — ForumForge
