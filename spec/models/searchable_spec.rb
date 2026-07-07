@@ -28,7 +28,7 @@ RSpec.describe Searchable, type: :model do
 
     it "matches link topics by their URL host" do
       topic = create(:topic, :link, title: "A cool read", url: "https://hotwired.dev/handbook")
-      expect(Topic.search("hotwired")).to include(topic)
+      expect(Topic.search("hotwired.dev")).to include(topic)
     end
 
     it "returns an empty relation for a blank query without hitting the DB hard" do

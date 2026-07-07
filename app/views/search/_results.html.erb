@@ -20,12 +20,14 @@
               </div>
               <div class="search-result__body">
                 <h3 class="search-result__title">
-                  <%= link_to topic.title, topic_path(topic) %>
+                  <%= link_to topic.search_highlight(:title, @query), topic_path(topic) %>
                   <% if topic.link? %><span class="domain">(<%= topic.domain %>)</span><% end %>
                 </h3>
-                <p class="search-result__snippet">
-                  <%= topic.search_highlight(topic.body.present? ? :body : :title, @query) %>
-                </p>
+                <% if topic.body.present? %>
+                  <p class="search-result__snippet">
+                    <%= topic.search_highlight(:body, @query) %>
+                  </p>
+                <% end %>
                 <p class="search-result__meta">
                   in <%= link_to topic.category.name, category_path(topic.category) %>
                   by <%= topic.user.username %>

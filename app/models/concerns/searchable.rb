@@ -12,13 +12,6 @@ module Searchable
   # Postgres text-search configuration used by the generated column and here.
   TS_CONFIG = "english"
 
-  # Unicode sentinels ts_headline wraps matches in. They contain none of the
-  # characters HTML-escaping touches (< > & " '), so we can escape the whole
-  # snippet first — neutralising any HTML in the underlying user text — and
-  # only then swap the sentinels for real <mark> tags. XSS-safe by design.
-  HL_START = "❰hl❱"  # ❰hl❱
-  HL_STOP  = "❲hl❳"  # ❲hl❳
-
   class_methods do
     # Returns records matching `query`, most relevant first. Blank queries
     # return an empty relation so callers can render an empty state cheaply.
@@ -32,22 +25,24 @@ module Searchable
   end
 
   # A short, HTML-safe snippet of `field` with matched terms wrapped in <mark>.
+  #
+  # XSS-safe by construction: we HTML-escape the source text BEFORE handing it
+  # to ts_headline, so any markup in the user's content becomes inert entities
+  # (`&lt;script&gt;`). ts_headline then wraps only the matched query terms in
+  # literal `<mark>`/`</mark>` tags, which are the only live markup in the
+  # result — hence html_safe.
   def search_highlight(field, query, max_words: 30, min_words: 15)
     cleaned = query.to_s.strip
     text = public_send(field).to_s
-    return ActionController::Base.helpers.truncate(text, length: 160) if cleaned.blank?
+    return ERB::Util.html_escape(ActionController::Base.helpers.truncate(text, length: 160)) if cleaned.blank?
 
-    opts = "StartSel=#{HL_START}, StopSel=#{HL_STOP}, MaxWords=#{max_words.to_i}, MinWords=#{min_words.to_i}, ShortWord=2, HighlightAll=FALSE"
+    escaped = ERB::Util.html_escape(text).to_s
+    opts = "StartSel=<mark>, StopSel=</mark>, MaxWords=#{max_words.to_i}, MinWords=#{min_words.to_i}, ShortWord=2, HighlightAll=FALSE"
     sql = self.class.sanitize_sql_array([
       "SELECT ts_headline(:cfg, :text, websearch_to_tsquery(:cfg, :q), :opts)",
-      { cfg: TS_CONFIG, text: text, q: cleaned, opts: opts }
+      { cfg: TS_CONFIG, text: escaped, q: cleaned, opts: opts }
     ])
-    raw_snippet = self.class.connection.select_value(sql) || text
-    # Escape the snippet first (neutralising any HTML in user content), then
-    # swap the unicode sentinels for real <mark> tags. ERB::Util.html_escape is
-    # public (helpers#html_escape is private on the view context).
-    escaped = ERB::Util.html_escape(raw_snippet).to_s
-    marked = escaped.gsub(HL_START, "<mark>").gsub(HL_STOP, "</mark>")
-    marked.html_safe # rubocop:disable Rails/OutputSafety
+    snippet = self.class.connection.select_value(sql) || escaped
+    snippet.html_safe # rubocop:disable Rails/OutputSafety
   end
 end
