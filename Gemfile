@@ -22,7 +22,7 @@ gem "stimulus-rails"
 gem "jbuilder"
 
 # Authentication
-gem "devise", "~> 4.9"
+gem "devise", "~> 5.0"
 
 # Background jobs on Redis
 gem "sidekiq", "~> 7.2"
