@@ -5,13 +5,16 @@ require "rails_helper"
 RSpec.describe "Search", type: :request do
   describe "GET /search" do
     it "renders the search page with matching topics" do
-      create(:topic, title: "A thread about Hotwire and Turbo Streams")
+      match = create(:topic, title: "A thread about Hotwire and Turbo Streams")
       create(:topic, title: "Completely different subject")
 
       get search_path, params: { q: "hotwire turbo" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Hotwire and Turbo Streams")
+      # The matching topic is linked in the results (its title may be broken up
+      # by <mark> highlight tags, so assert on the link, not the raw title).
+      expect(response.body).to include(topic_path(match))
+      expect(response.body).to include("<mark>Hotwire</mark>")
       expect(response.body).not_to include("Completely different subject")
     end
 
