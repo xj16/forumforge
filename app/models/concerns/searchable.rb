@@ -26,17 +26,16 @@ module Searchable
       cleaned = query.to_s.strip
       return none if cleaned.blank?
 
-      order = sanitize_sql_array(["ts_rank(search_vector, websearch_to_tsquery(?, ?)) DESC, created_at DESC", TS_CONFIG, cleaned])
+      order = sanitize_sql_array([ "ts_rank(search_vector, websearch_to_tsquery(?, ?)) DESC, created_at DESC", TS_CONFIG, cleaned ])
       where("search_vector @@ websearch_to_tsquery(:cfg, :q)", cfg: TS_CONFIG, q: cleaned).order(Arel.sql(order))
     end
   end
 
   # A short, HTML-safe snippet of `field` with matched terms wrapped in <mark>.
   def search_highlight(field, query, max_words: 30, min_words: 15)
-    helpers = ActionController::Base.helpers
     cleaned = query.to_s.strip
     text = public_send(field).to_s
-    return helpers.truncate(text, length: 160) if cleaned.blank?
+    return ActionController::Base.helpers.truncate(text, length: 160) if cleaned.blank?
 
     opts = "StartSel=#{HL_START}, StopSel=#{HL_STOP}, MaxWords=#{max_words.to_i}, MinWords=#{min_words.to_i}, ShortWord=2, HighlightAll=FALSE"
     sql = self.class.sanitize_sql_array([
@@ -44,7 +43,11 @@ module Searchable
       { cfg: TS_CONFIG, text: text, q: cleaned, opts: opts }
     ])
     raw_snippet = self.class.connection.select_value(sql) || text
-    marked = helpers.html_escape(raw_snippet).gsub(HL_START, "<mark>").gsub(HL_STOP, "</mark>")
+    # Escape the snippet first (neutralising any HTML in user content), then
+    # swap the unicode sentinels for real <mark> tags. ERB::Util.html_escape is
+    # public (helpers#html_escape is private on the view context).
+    escaped = ERB::Util.html_escape(raw_snippet).to_s
+    marked = escaped.gsub(HL_START, "<mark>").gsub(HL_STOP, "</mark>")
     marked.html_safe # rubocop:disable Rails/OutputSafety
   end
 end

@@ -31,7 +31,7 @@ class VotedSet
       user.votes
           .where(votable_type: type, votable_id: ids)
           .pluck(:votable_id)
-          .each { |id| pairs << [type, id] }
+          .each { |id| pairs << [ type, id ] }
     end
 
     new(pairs)
@@ -45,7 +45,7 @@ class VotedSet
   def voted?(votable)
     return false if votable.nil?
 
-    @pairs.include?([votable.class.base_class.name, votable.id])
+    @pairs.include?([ votable.class.base_class.name, votable.id ])
   end
 
   # Number of tracked upvotes (handy in specs).

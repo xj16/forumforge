@@ -23,7 +23,7 @@ class TopicsController < ApplicationController
     @post = Post.new
     # Preload the viewer's votes for the topic + every rendered comment (and
     # their replies) in a single query to avoid an N+1 across the thread.
-    votables = [@topic] + @posts + @posts.flat_map(&:replies)
+    votables = [ @topic ] + @posts + @posts.flat_map(&:replies)
     @voted = VotedSet.for(current_user, votables)
   end
 
