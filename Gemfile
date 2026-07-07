@@ -25,7 +25,7 @@ gem "jbuilder"
 gem "devise", "~> 4.9"
 
 # Background jobs on Redis
-gem "sidekiq", "~> 7.2"
+gem "sidekiq", "~> 8.1"
 gem "redis", "~> 5.0"
 
 # Pagination & slugs
